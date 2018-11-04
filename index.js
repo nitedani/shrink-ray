@@ -71,24 +71,22 @@ function compression(options) {
   zlibOptNames.forEach(function (option) {
     zlibOpts[option] = zlibOpts[option] || opts[option];
   });
-  
+
   if (!opts.hasOwnProperty('cacheSize')) opts.cacheSize = '128mB';
   const cache = opts.cacheSize ? createCache(bytes(opts.cacheSize.toString())) : null;
-  
+
   const shouldCache = opts.cache || function () { return true; };
-  
-  const dummyBrotliFlush = function () { };
-  
+
   return function compression(req, res, next) {
     let ended     = false;
     let length;
     let listeners = [];
     let stream;
-    
+
     const _end   = res.end;
     const _on    = res.on;
     const _write = res.write;
-    
+
     // flush
     res.flush = function flush() {
       if (stream) {
@@ -234,9 +232,7 @@ function compression(options) {
         debug('%s compression', method);
         switch (method) {
           case 'br':
-            stream       = iltorb.compressStream(brotliOpts);
-            // brotli has no flush method. add a dummy flush method here.
-            stream.flush = dummyBrotliFlush;
+            stream = iltorb.compressStream(brotliOpts);
             break;
           case 'gzip':
             stream = zlib.createGzip(zlibOpts);
