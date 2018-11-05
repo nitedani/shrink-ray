@@ -1,11 +1,12 @@
 {
   "name": "shrink-ray-current",
   "description": "Node.js compression middleware with brotli and zopfli support",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "contributors": [
     "Arturas Molcanovas <a.molcanovas@gmail.com> (https://alorel.github.io)",
     "Douglas Christopher Wilson <doug@somethingdoug.com>",
     "Jonathan Ong <me@jongleberry.com> (http://jongleberry.com)",
+    "Scott Davis (https://github.com/scttdavs)",
     "Sasha Aickin"
   ],
   "license": "MIT",
