@@ -339,7 +339,7 @@ function shouldTransform(req, res) {
 
 function createCache(size) {
   const index = {};
-  const lru   = lruCache({
+  const lru   = new lruCache({
                            max:     size,
                            length:  function (item, key) {
                              return item.buffer.length +
