@@ -44,6 +44,10 @@ const cacheControlNoTransformRegExp = /(?:^|,)\s*?no-transform\s*?(?:,|$)/;
 // worry about compression runtime being slower than gzip
 const BROTLI_DEFAULT_QUALITY = 4;
 
+function stubTrue() {
+  return true;
+}
+
 /**
  * Compress response data with gzip / deflate.
  *
@@ -54,18 +58,18 @@ const BROTLI_DEFAULT_QUALITY = 4;
 
 function compression(options) {
   const opts = options || {};
-  
+
   // options
   const filter  = opts.filter || shouldCompress;
   let threshold = bytes.parse(opts.threshold);
-  
+
   if (threshold === null) {
     threshold = 1024;
   }
-  
+
   const brotliOpts   = opts.brotli || {};
   brotliOpts.quality = brotliOpts.quality || BROTLI_DEFAULT_QUALITY;
-  
+
   const zlibOpts     = opts.zlib || {};
   const zlibOptNames = ['flush', 'chunkSize', 'windowBits', 'level', 'memLevel', 'strategy', 'dictionary'];
   zlibOptNames.forEach(function (option) {
@@ -75,7 +79,7 @@ function compression(options) {
   if (!opts.hasOwnProperty('cacheSize')) opts.cacheSize = '128mB';
   const cache = opts.cacheSize ? createCache(bytes(opts.cacheSize.toString())) : null;
 
-  const shouldCache = opts.cache || function () { return true; };
+  const shouldCache = opts.cache || stubTrue;
 
   return function compression(req, res, next) {
     let ended     = false;
@@ -93,109 +97,109 @@ function compression(options) {
         stream.flush();
       }
     };
-    
+
     // proxy
-    
+
     res.write = function write(chunk, encoding) {
       if (ended) {
         return false;
       }
-      
+
       if (!this._header) {
         this._implicitHeader();
       }
-      
+
       return stream
-        ? stream.write(new Buffer(chunk, encoding))
+        ? stream.write(Buffer.from(chunk, encoding))
         : _write.call(this, chunk, encoding);
     };
-    
+
     res.end = function end(chunk, encoding) {
       if (ended) {
         return false;
       }
-      
+
       if (!this._header) {
         // estimate the length
         if (!this.getHeader('Content-Length')) {
           length = chunkLength(chunk, encoding);
         }
-        
+
         this._implicitHeader();
       }
-      
+
       if (!stream) {
         return _end.call(this, chunk, encoding);
       }
-      
+
       // mark ended
       ended = true;
-      
+
       // write Buffer for Node.js 0.8
       return chunk
-        ? stream.end(new Buffer(chunk, encoding))
+        ? stream.end(Buffer.from(chunk, encoding))
         : stream.end();
     };
-    
+
     res.on = function on(type, listener) {
       if (!listeners || type !== 'drain') {
         return _on.call(this, type, listener);
       }
-      
+
       if (stream) {
         return stream.on(type, listener);
       }
-      
+
       // buffer listeners for future stream
       listeners.push([type, listener]);
-      
+
       return this;
     };
-    
+
     function nocompress(msg) {
       debug('no compression: %s', msg);
       addListeners(res, _on, listeners);
       listeners = null;
     }
-    
+
     onHeaders(res, function onResponseHeaders() {
       // determine if request is filtered
       if (!filter(req, res)) {
         nocompress('filtered');
         return;
       }
-      
+
       // determine if the entity should be transformed
       if (!shouldTransform(req, res)) {
         nocompress('no transform');
         return;
       }
-      
+
       // vary
       vary(res, 'Accept-Encoding');
-      
+
       // content-length below threshold
       if (Number(res.getHeader('Content-Length')) < threshold || length < threshold) {
         nocompress('size below threshold');
         return;
       }
-      
+
       const encoding = res.getHeader('Content-Encoding') || 'identity';
-      
+
       // already encoded
       if (encoding !== 'identity') {
         nocompress('already encoded');
         return;
       }
-      
+
       // head
       if (req.method === 'HEAD') {
         nocompress('HEAD request');
         return;
       }
-      
+
       const contentType = res.getHeader('Content-Type');
-      
+
       // compression method
       const accept = accepts(req);
       // send in each compression method separately to ignore client preference and
@@ -206,13 +210,13 @@ function compression(options) {
                      accept.encoding('gzip') ||
                      accept.encoding('deflate') ||
                      accept.encoding('identity');
-      
+
       // negotiation failed
       if (!method || method === 'identity') {
         nocompress('not acceptable');
         return;
       }
-      
+
       // do we have this coding/url/etag combo in the cache?
       const etag      = res.getHeader('ETag') || null;
       const cacheable = cache && shouldCache(req, res) && etag && res.statusCode >= 200 && res.statusCode < 300;
@@ -224,7 +228,7 @@ function compression(options) {
           stream = new BufferDuplex(buffer);
         }
       }
-      
+
       // if stream is not assigned, we got a cache miss and need to compress
       // the result
       if (!stream) {
@@ -241,7 +245,7 @@ function compression(options) {
             stream = zlib.createDeflate(zlibOpts);
             break;
         }
-        
+
         // if it is cacheable, let's keep hold of the compressed chunks and cache
         // them once the compression stream ends.
         if (cacheable) {
@@ -254,30 +258,30 @@ function compression(options) {
           });
         }
       }
-      
+
       // add buffered listeners to stream
       addListeners(stream, stream.on, listeners);
-      
+
       // header fields
       res.setHeader('Content-Encoding', method);
       res.removeHeader('Content-Length');
-      
+
       // compression
       stream.on('data', function onStreamData(chunk) {
         if (_write.call(res, chunk) === false) {
           stream.pause();
         }
       });
-      
+
       stream.on('end', function onStreamEnd() {
         _end.call(res);
       });
-      
+
       _on.call(res, 'drain', function onResponseDrain() {
         stream.resume();
       });
     });
-    
+
     next();
   };
 }
@@ -301,7 +305,7 @@ function chunkLength(chunk, encoding) {
   if (!chunk) {
     return 0;
   }
-  
+
   return !Buffer.isBuffer(chunk)
     ? Buffer.byteLength(chunk, encoding)
     : chunk.length;
@@ -314,12 +318,12 @@ function chunkLength(chunk, encoding) {
 
 function shouldCompress(req, res) {
   const type = res.getHeader('Content-Type');
-  
+
   if (type === undefined || !compressible(type)) {
     debug('%s not compressible', type);
     return false;
   }
-  
+
   return true;
 }
 
@@ -330,7 +334,7 @@ function shouldCompress(req, res) {
 
 function shouldTransform(req, res) {
   const cacheControl = res.getHeader('Cache-Control');
-  
+
   // Don't compress for Cache-Control: no-transform
   // https://tools.ietf.org/html/rfc7234#section-5.2.2.4
   return !cacheControl ||
@@ -339,7 +343,7 @@ function shouldTransform(req, res) {
 
 function createCache(size) {
   const index = {};
-  const lru   = lruCache({
+  const lru   = new lruCache({
                            max:     size,
                            length:  function (item, key) {
                              return item.buffer.length +
@@ -350,7 +354,7 @@ function createCache(size) {
                            dispose: function (key, item) {
                              // remove this particular representation (by etag)
                              delete index[item.coding][item.url][item.etag];
-      
+
                              // if there are no more representations of the url left, remove the
                              // entry for the url.
                              if (Object.keys(index[item.coding][item.url]).length === 0) {
@@ -358,7 +362,7 @@ function createCache(size) {
                              }
                            }
                          });
-  
+
   return {
     add: function (coding, url, etag, buffer) {
       // check to see if another request already filled the cache; avoids
@@ -366,11 +370,11 @@ function createCache(size) {
       if (index[coding] && index[coding][url] && index[coding][url][etag]) {
         return;
       }
-      
+
       if (Array.isArray(buffer)) {
         buffer = Buffer.concat(buffer);
       }
-      
+
       const item = {
         coding: coding,
         url:    url,
@@ -378,16 +382,16 @@ function createCache(size) {
         buffer: buffer
       };
       const key  = {};
-      
+
       index[coding]            = index[coding] || {};
       index[coding][url]       = index[coding][url] || {};
       index[coding][url][etag] = key;
-      
+
       lru.set(key, item);
-      
+
       // now asynchronously re-encode the entry at best quality
       const result = new BufferWritable();
-      
+
       new BufferReadable(buffer)
         .pipe(getBestQualityReencoder(coding))
         .pipe(result)
@@ -398,7 +402,7 @@ function createCache(size) {
           }
         });
     },
-    
+
     lookup: function (coding, url, etag) {
       if (index[coding] && index[coding][url] && index[coding][url][etag]) {
         return lru.get(index[coding][url][etag]).buffer;
@@ -455,7 +459,7 @@ BufferDuplex.prototype._read = function (size) {
     this.push(null);
     return;
   }
-  
+
   const endIndex = Math.min(this.cursor + size, this.buffer.length);
   this.push(this.buffer.slice(this.cursor, endIndex));
   this.cursor = endIndex;
