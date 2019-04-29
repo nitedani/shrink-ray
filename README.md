@@ -42,6 +42,7 @@ project.
 
 
 - [Install](#install)
+  - [Peer Dependencies](#peer-dependencies)
 - [API](#api)
   - [`shrinkRay([options])`](#shrinkrayoptions)
     - [Options](#options)

@@ -1,13 +1,14 @@
 {
   "name": "shrink-ray-current",
   "description": "Node.js compression middleware with brotli and zopfli support",
-  "version": "3.0.2",
+  "version": "4.0.0",
   "contributors": [
     "Arturas Molcanovas <a.molcanovas@gmail.com> (https://alorel.github.io)",
     "Douglas Christopher Wilson <doug@somethingdoug.com>",
     "Jonathan Ong <me@jongleberry.com> (http://jongleberry.com)",
     "Scott Davis (https://github.com/scttdavs)",
-    "Sasha Aickin"
+    "Sasha Aickin",
+    "James Zetlen (https://github.com/zetlen)"
   ],
   "license": "MIT",
   "repository": {
@@ -45,6 +46,7 @@
   },
   "devDependencies": {
     "coveralls": "^3.0.0",
+    "doctoc": "^1.4.0",
     "expect": "^24.1.0",
     "iltorb": "^2.0.0",
     "mocha": "^6.1.4",
@@ -63,6 +65,7 @@
   "scripts": {
     "reinstall": "rm -rf node_modules package-lock.json && npm install",
     "test": "nyc mocha --check-leaks --bail",
-    "version-readme": "node ./prepublish.js"
+    "version-readme": "node ./prepublish.js",
+    "doctoc": "doctoc --github README.md"
   }
 }
