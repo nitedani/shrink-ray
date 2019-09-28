@@ -46,6 +46,7 @@ project.
 - [API](#api)
   - [`shrinkRay([options])`](#shrinkrayoptions)
     - [Options](#options)
+      - [useZopfliForGzip](#usezopfliforgzip)
       - [filter](#filter)
       - [cache](#cache)
       - [cacheSize](#cachesize)
@@ -128,6 +129,11 @@ Note that `shrink-ray` options are backward-compatible with `compression`, but
 we have also moved all of the gzip/deflate/zlib-specific parameters
 into a sub-object called `zlib`. If you use `zlib` parameters at the root level
 of options in `shrink-ray`, you will get a deprecation warning.
+
+#### useZopfliForGzip
+
+Whether to use [node-zopfli-es](https://www.npmjs.com/package/node-zopfli-es) (`true`) or zlib (`false`) for gzip compression.
+Defaults to `true`.
 
 #### filter
 

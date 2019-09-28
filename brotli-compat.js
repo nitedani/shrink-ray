@@ -1,6 +1,4 @@
-module.exports = getBrotliModule;
-
-function getBrotliModule() {
+module.exports = function brotliCompat() {
   const zlib = require('zlib');
 
   if (typeof zlib.createBrotliCompress === 'function') {
@@ -12,8 +10,8 @@ function getBrotliModule() {
       quality: zlib.constants.BROTLI_PARAM_QUALITY,
       lgwin: zlib.constants.BROTLI_PARAM_LGWIN,
       lgblock: zlib.constants.BROTLI_PARAM_LGBLOCK,
-      disable_literal_context_modeling:  
-        zlib.constants.BROTLI_PARAM_DISABLE_LITERAL_CONTEXT_MODELING,
+      disable_literal_context_modeling:
+      zlib.constants.BROTLI_PARAM_DISABLE_LITERAL_CONTEXT_MODELING,
       large_window: zlib.constants.BROTLI_PARAM_LARGE_WINDOW
     };
     const iltorbOptionsToNodeZlibBrotliOpts = iltorbOpts => {
@@ -23,11 +21,11 @@ function getBrotliModule() {
         if (ILTORB_OPTION_NAMES_TO_BROTLI_PARAM_NAMES.hasOwnProperty(key)) {
           params[ILTORB_OPTION_NAMES_TO_BROTLI_PARAM_NAMES[key]] = iltorbOpts[
             key
-          ];
+            ];
         }
       });
       return { params };
-    }
+    };
 
     /**
      * Replicate the 'iltorb' interface for backwards compatibility.
@@ -42,7 +40,7 @@ function getBrotliModule() {
     };
 
   }
-  
+
   // If we get here, then our NodeJS does not support brotli natively.
   try {
     return require('iltorb');
@@ -55,8 +53,8 @@ function getBrotliModule() {
       }
     );
   }
-  
+
   // Return a signal value instead of throwing an exception, so the code in the
   // index file doesn't have to try/catch again.
   return false;
-}
+};

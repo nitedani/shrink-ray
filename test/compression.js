@@ -1,12 +1,12 @@
 'use strict';
 
-const assert        = require('assert');
-const bytes         = require('bytes');
-const crypto        = require('crypto');
-const http          = require('http');
-const iltorb        = require('iltorb');
+const assert = require('assert');
+const bytes = require('bytes');
+const crypto = require('crypto');
+const http = require('http');
+const iltorb = require('iltorb');
 const streamBuffers = require('stream-buffers');
-const request       = require('supertest');
+const request = require('supertest');
 
 const compression = require('..');
 
@@ -14,7 +14,8 @@ const createdServers = [];
 
 describe('compression()', function () {
   after(() => {
-    const cb = () => {};
+    const cb = () => {
+    };
 
     for (const server of createdServers) {
       server.close(cb);
@@ -156,7 +157,8 @@ describe('compression()', function () {
 
     request(server)
       .get('/')
-      .end(function () {});
+      .end(function () {
+      });
   });
 
   it('should back-pressure when compressed', function (done) {
@@ -164,7 +166,7 @@ describe('compression()', function () {
     let client;
     let resp;
     let drained = false;
-    let wait    = 2;
+    let wait = 2;
 
     const server = createServer({threshold: 0}, function (req, res) {
       resp = res;
@@ -221,9 +223,13 @@ describe('compression()', function () {
     let client;
     let resp;
     let drained = false;
-    let wait    = 2;
+    let wait = 2;
 
-    const server = createServer({filter: function () { return false; }}, function (req, res) {
+    const server = createServer({
+      filter: function () {
+        return false;
+      }
+    }, function (req, res) {
       resp = res;
       res.on('drain', function () {
         drained = true;
@@ -274,8 +280,8 @@ describe('compression()', function () {
   });
 
   it('should transfer large bodies', function (done) {
-    const len    = bytes('1mb');
-    const buf    = Buffer.alloc(len);
+    const len = bytes('1mb');
+    const buf = Buffer.alloc(len);
     const server = createServer({threshold: 0}, function (req, res) {
       res.setHeader('Content-Type', 'text/plain');
       res.end(buf);
@@ -291,8 +297,8 @@ describe('compression()', function () {
   });
 
   it('should transfer large bodies with multiple writes', function (done) {
-    const len    = bytes('40kb');
-    const buf    = Buffer.alloc(len);
+    const len = bytes('40kb');
+    const buf = Buffer.alloc(len);
     const server = createServer({threshold: 0}, function (req, res) {
       res.setHeader('Content-Type', 'text/plain');
       res.write(buf);
@@ -540,13 +546,13 @@ describe('compression()', function () {
             iltorb.compressSync(Buffer.from('hello, world', 'utf-8'), {quality: 8})
           );
           done();
-      });
+        });
     });
   });
 
   describe('when caching is turned on', function () {
     it('should cache a gzipped response with the same ETag', function (done) {
-      let count    = 0;
+      let count = 0;
       const server = createServer({threshold: 0}, function (req, res) {
         res.setHeader('Content-Type', 'text/plain');
         res.setHeader('ETag', '12345');
@@ -560,7 +566,7 @@ describe('compression()', function () {
     });
 
     it('should cache a deflate response with the same ETag', function (done) {
-      let count    = 0;
+      let count = 0;
       const server = createServer({threshold: 0}, function (req, res) {
         res.setHeader('Content-Type', 'text/plain');
         res.setHeader('ETag', '12345');
@@ -574,7 +580,7 @@ describe('compression()', function () {
     });
 
     it('should cache a brotli response with the same ETag', function (done) {
-      let count    = 0;
+      let count = 0;
       const server = createServer({threshold: 0, brotli: {quality: 1}}, function (req, res) {
         res.setHeader('Content-Type', 'text/plain');
         res.setHeader('ETag', '12345');
@@ -598,8 +604,12 @@ describe('compression()', function () {
     });
 
     it('should not cache when the cache function returns false', function (done) {
-      let count    = 0;
-      const server = createServer({threshold: 0, cache: function (req, res) { return false; }}, function (req, res) {
+      let count = 0;
+      const server = createServer({
+        threshold: 0, cache: function (req, res) {
+          return false;
+        }
+      }, function (req, res) {
         res.setHeader('Content-Type', 'text/plain');
         res.setHeader('ETag', '12345');
         res.end('hello, world #' + count);
@@ -612,7 +622,7 @@ describe('compression()', function () {
     });
 
     it('should not get a cached compressed response for a different ETag', function (done) {
-      let count    = 0;
+      let count = 0;
       const server = createServer({threshold: 0}, function (req, res) {
         res.setHeader('Content-Type', 'text/plain');
         res.setHeader('ETag', count.toString());
@@ -626,7 +636,7 @@ describe('compression()', function () {
     });
 
     it('should not cache when there is no ETag', function (done) {
-      let count    = 0;
+      let count = 0;
       const server = createServer({threshold: 0}, function (req, res) {
         res.setHeader('Content-Type', 'text/plain');
         res.end('hello, world #' + count);
@@ -639,7 +649,7 @@ describe('compression()', function () {
     });
 
     it('should not cache when caching is disabled', function (done) {
-      let count    = 0;
+      let count = 0;
       const server = createServer({threshold: 0, cacheSize: false}, function (req, res) {
         res.setHeader('Content-Type', 'text/plain');
         res.setHeader('ETag', '12345');
@@ -653,8 +663,8 @@ describe('compression()', function () {
     });
 
     it('should evict from the cache when over the limit', function (done) {
-      let etag     = 'a';
-      let count    = 0;
+      let etag = 'a';
+      let count = 0;
       const server = createServer({threshold: 0, cacheSize: 40}, function (req, res) {
         res.setHeader('Content-Type', 'text/plain');
         res.setHeader('ETag', etag);
@@ -662,13 +672,13 @@ describe('compression()', function () {
       });
 
       gzipRequest(server).expect('hello, world #0', function () {
-        etag  = 'b';
+        etag = 'b';
         count = 1;
         gzipRequest(server).expect('hello, world #1', function () {
-          etag  = 'b';
+          etag = 'b';
           count = 2;
           gzipRequest(server).expect('hello, world #1', function () {
-            etag  = 'a';
+            etag = 'a';
             count = 3;
             gzipRequest(server).expect('hello, world #3', done);
           });
@@ -677,8 +687,8 @@ describe('compression()', function () {
     });
 
     it('should evict the oldest representation from the cache when over the limit', function (done) {
-      let etag     = 'a';
-      let count    = 0;
+      let etag = 'a';
+      let count = 0;
       const server = createServer({threshold: 0, cacheSize: 80}, function (req, res) {
         res.setHeader('Content-Type', 'text/plain');
         res.setHeader('ETag', etag);
@@ -686,16 +696,16 @@ describe('compression()', function () {
       });
 
       gzipRequest(server).expect('hello, world #0', function () {
-        etag  = 'b';
+        etag = 'b';
         count = 1;
         gzipRequest(server).expect('hello, world #1', function () {
-          etag  = 'c';
+          etag = 'c';
           count = 2;
           gzipRequest(server).expect('hello, world #2', function () {
-            etag  = 'b';
+            etag = 'b';
             count = 3;
             gzipRequest(server).expect('hello, world #1', function () {
-              etag  = 'a';
+              etag = 'a';
               count = 4;
               gzipRequest(server).expect('hello, world #4', done);
             });
@@ -787,7 +797,7 @@ describe('compression()', function () {
     });
 
     it('should flush the response', function (done) {
-      let chunks   = 0;
+      let chunks = 0;
       let resp;
       const server = createServer({threshold: 0}, function (req, res) {
         resp = res;
@@ -820,14 +830,14 @@ describe('compression()', function () {
     it('should flush the response for brotli', function (done) {
       var chunks = 0;
       var resp;
-      var server = createServer({ threshold: 0 }, function (req, res) {
+      var server = createServer({threshold: 0}, function (req, res) {
         resp = res;
         res.setHeader('Content-Type', 'text/plain');
         res.setHeader('Content-Length', '2048');
         write();
       });
 
-      function write () {
+      function write() {
         chunks++;
         if (chunks === 2) return resp.end();
         if (chunks > 2) return chunks--;
@@ -836,20 +846,20 @@ describe('compression()', function () {
       }
 
       brotliRequest(server)
-      .request()
-      .on('response', function (res) {
-        assert.equal(res.headers['content-encoding'], 'br');
-        res.on('data', write);
-        res.on('end', function () {
-          assert.equal(chunks, 2);
-          done();
-        });
-      })
-      .end();
+        .request()
+        .on('response', function (res) {
+          assert.equal(res.headers['content-encoding'], 'br');
+          res.on('data', write);
+          res.on('end', function () {
+            assert.equal(chunks, 2);
+            done();
+          });
+        })
+        .end();
     });
 
     it('should flush small chunks for gzip', function (done) {
-      let chunks   = 0;
+      let chunks = 0;
       let resp;
       const server = createServer({threshold: 0}, function (req, res) {
         resp = res;
@@ -881,13 +891,13 @@ describe('compression()', function () {
     it('should flush small chunks for brotli', function (done) {
       var chunks = 0;
       var resp;
-      var server = createServer({ threshold: 0 }, function (req, res) {
+      var server = createServer({threshold: 0}, function (req, res) {
         resp = res;
         res.setHeader('Content-Type', 'text/plain');
         write();
       });
 
-      function write () {
+      function write() {
         chunks++;
         if (chunks === 20) return resp.end();
         if (chunks > 20) return chunks--;
@@ -896,20 +906,20 @@ describe('compression()', function () {
       }
 
       brotliRequest(server)
-      .request()
-      .on('response', function (res) {
-        assert.equal(res.headers['content-encoding'], 'br');
-        res.on('data', write);
-        res.on('end', function () {
-          assert.equal(chunks, 20);
-          done();
-        });
-      })
-      .end();
+        .request()
+        .on('response', function (res) {
+          assert.equal(res.headers['content-encoding'], 'br');
+          res.on('data', write);
+          res.on('end', function () {
+            assert.equal(chunks, 20);
+            done();
+          });
+        })
+        .end();
     });
 
     it('should flush small chunks for deflate', function (done) {
-      let chunks   = 0;
+      let chunks = 0;
       let resp;
       const server = createServer({threshold: 0}, function (req, res) {
         resp = res;
@@ -945,7 +955,7 @@ const proxyquire = require('proxyquire');
 
 describe('compat factory for', function () {
   describe('brotli', function () {
-    it('returns iltorb facade on zlib when node supports brotli', function() {
+    it('returns iltorb facade on zlib when node supports brotli', function () {
       // simulate brotli compat no matter what node version for this test
       const zlibMock = {
         constants: {
@@ -966,11 +976,11 @@ describe('compat factory for', function () {
           return zlibMock.stream;
         }
       };
-      
+
       const brotliCompat = proxyquire.noCallThru().load('../brotli-compat', {
         zlib: zlibMock
       });
-      
+
       const brotli = brotliCompat();
       assert.equal(typeof brotli.compressStream, 'function');
       assert.equal(typeof brotli.decompressStream, 'function');
@@ -993,7 +1003,7 @@ describe('compat factory for', function () {
       assert.equal(zlibMock.decompressOpts, undefined);
     });
 
-    it('returns iltorb where native brotli is unavailable', function() {
+    it('returns iltorb where native brotli is unavailable', function () {
       const brotliCompat = proxyquire.noCallThru().load('../brotli-compat', {
         // simulate NO brotli compat no matter what node version for this test
         zlib: {
@@ -1020,21 +1030,34 @@ describe('compat factory for', function () {
     })
   });
   describe('zopfli', function () {
-    const mockZop = {};
-    it('returns zopfli if it exists', function () {
-      const zopfliCompat = proxyquire.noCallThru().load('../zopfli-compat', {
-        'node-zopfli-es': mockZop
+    describe('Using zlib', () => {
+      it('returns zlib if it even if zopfli exists', function () {
+        const mockZlib = {};
+        const zopfliCompat = proxyquire.noCallThru().load('../zopfli-compat', {
+          'node-zopfli-es': {},
+          zlib: mockZlib
+        });
+        assert.equal(zopfliCompat(false), mockZlib);
       });
-      assert.equal(zopfliCompat(), mockZop);
     });
 
-    it('returns false if zopfli does not', function () {
-      const mockZlib = {};
-      const zopfliCompat = proxyquire.noCallThru().load('../zopfli-compat', {
-        'node-zopfli-es': null,
-        zlib: mockZlib
+    describe('Using zopfli', () => {
+      it('returns zopfli if it exists', function () {
+        const mockZop = {};
+        const zopfliCompat = proxyquire.noCallThru().load('../zopfli-compat', {
+          'node-zopfli-es': mockZop
+        });
+        assert.equal(zopfliCompat(true), mockZop);
       });
-      assert.equal(zopfliCompat(), mockZlib);
+
+      it('returns false if zopfli does not', function () {
+        const mockZlib = {};
+        const zopfliCompat = proxyquire.noCallThru().load('../zopfli-compat', {
+          'node-zopfli-es': null,
+          zlib: mockZlib
+        });
+        assert.equal(zopfliCompat(true), mockZlib);
+      });
     })
   });
 });
