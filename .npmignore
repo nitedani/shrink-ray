@@ -2,6 +2,7 @@
 /benchmark/
 /test/
 /.nycrc
+/.nyc_output
 /.travis.yml
 /*.tgz
 /.idea
