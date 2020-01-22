@@ -48,7 +48,7 @@
   "devDependencies": {
     "coveralls": "^3.0.0",
     "doctoc": "^1.4.0",
-    "expect": "^24.1.0",
+    "expect": "^25.1.0",
     "iltorb": "^2.0.0",
     "mocha": "^6.1.4",
     "node-zopfli-es": "^1.0.3",
