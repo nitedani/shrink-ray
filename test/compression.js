@@ -1,10 +1,9 @@
 'use strict';
-
+const zlib = require('zlib')
 const assert = require('assert');
 const bytes = require('bytes');
 const crypto = require('crypto');
 const http = require('http');
-const iltorb = require('iltorb');
 const streamBuffers = require('stream-buffers');
 const request = require('supertest');
 
@@ -523,7 +522,7 @@ describe('compression()', function () {
       brotliRequest(server)
         .pipe(stream)
         .on('finish', function () {
-          assert.equal('hello, world', iltorb.decompressSync(stream.getContents()).toString('utf-8'));
+          assert.equal('hello, world', zlib.decompressSync(stream.getContents()).toString('utf-8'));
           done();
         });
     });
@@ -543,7 +542,7 @@ describe('compression()', function () {
           // brotli directly with the same quality parameter.
           assertBuffersEqual(
             stream.getContents(),
-            iltorb.compressSync(Buffer.from('hello, world', 'utf-8'), {quality: 8})
+            zlib.compressSync(Buffer.from('hello, world', 'utf-8'), {quality: 8})
           );
           done();
         });
@@ -592,12 +591,12 @@ describe('compression()', function () {
       brotliRequest(server)
         .pipe(stream)
         .on('finish', function () {
-          assert.equal('hello, world #0', iltorb.decompressSync(stream.getContents()).toString('utf-8'));
+          assert.equal('hello, world #0', zlib.decompressSync(stream.getContents()).toString('utf-8'));
           const stream2 = new streamBuffers.WritableStreamBuffer();
           brotliRequest(server)
             .pipe(stream2)
             .on('finish', function () {
-              assert.equal('hello, world #0', iltorb.decompressSync(stream2.getContents()).toString('utf-8'));
+              assert.equal('hello, world #0', zlib.decompressSync(stream2.getContents()).toString('utf-8'));
               done();
             });
         });
@@ -954,81 +953,6 @@ describe('compression()', function () {
 const proxyquire = require('proxyquire');
 
 describe('compat factory for', function () {
-  describe('brotli', function () {
-    it('returns iltorb facade on zlib when node supports brotli', function () {
-      // simulate brotli compat no matter what node version for this test
-      const zlibMock = {
-        constants: {
-          BROTLI_PARAM_MODE: 1,
-          BROTLI_PARAM_QUALITY: 2,
-          BROTLI_PARAM_LGWIN: 3,
-          BROTLI_PARAM_LGBLOCK: 4,
-          BROTLI_PARAM_DISABLE_LITERAL_CONTEXT_MODELING: 5,
-          BROTLI_PARAM_LARGE_WINDOW: 6
-        },
-        stream: {},
-        createBrotliCompress(opts) {
-          zlibMock.compressOpts = opts;
-          return zlibMock.stream;
-        },
-        createBrotliDecompress(opts) {
-          zlibMock.decompressOpts = opts;
-          return zlibMock.stream;
-        }
-      };
-
-      const brotliCompat = proxyquire.noCallThru().load('../brotli-compat', {
-        zlib: zlibMock
-      });
-
-      const brotli = brotliCompat();
-      assert.equal(typeof brotli.compressStream, 'function');
-      assert.equal(typeof brotli.decompressStream, 'function');
-
-      assert.notEqual(brotli.compressStream, iltorb.compressStream);
-
-      const compressStream = brotli.compressStream({
-        quality: 5,
-        notARealBrotliOption: 'foo'
-      });
-      assert.strictEqual(compressStream, zlibMock.stream);
-      assert.deepStrictEqual(zlibMock.compressOpts, {
-        params: {
-          [zlibMock.constants.BROTLI_PARAM_QUALITY]: 5
-        }
-      });
-
-      const decompressStream = brotli.decompressStream();
-      assert.strictEqual(decompressStream, zlibMock.stream);
-      assert.equal(zlibMock.decompressOpts, undefined);
-    });
-
-    it('returns iltorb where native brotli is unavailable', function () {
-      const brotliCompat = proxyquire.noCallThru().load('../brotli-compat', {
-        // simulate NO brotli compat no matter what node version for this test
-        zlib: {
-          createBrotliCompress: false,
-          createBrotliDecompress: false
-        }
-      });
-      const brotli = brotliCompat();
-      assert.equal(typeof brotli.compressStream, 'function');
-      assert.equal(typeof brotli.decompressStream, 'function');
-      assert.equal(brotli.compressStream, iltorb.compressStream);
-    });
-
-    it('returns false if no brotli or iltorb are available', function () {
-      const brotliCompat = proxyquire.noCallThru().load('../brotli-compat', {
-        // simulate NO brotli compat no matter what node version for this test
-        zlib: {
-          createBrotliCompress: false,
-          createBrotliDecompress: false
-        },
-        iltorb: null
-      });
-      assert.equal(brotliCompat(), false);
-    })
-  });
   describe('zopfli', function () {
     describe('Using zlib', () => {
       it('returns zlib if it even if zopfli exists', function () {

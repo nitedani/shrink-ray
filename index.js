@@ -31,7 +31,6 @@ const zlib         = require('zlib');
  * the module should work!
  * Known dependency issues:
  *  - node-zopfli-es is not compatible with Node <8.11.
- *  - iltorb is not required for Node >= 11.8, whose zlib has brotli built in.
  */
 
 const brotliCompat = require('./brotli-compat');
