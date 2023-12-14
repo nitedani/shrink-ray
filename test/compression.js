@@ -4,9 +4,9 @@ const assert = require('assert');
 const bytes = require('bytes');
 const crypto = require('crypto');
 const http = require('http');
-const iltorb = require('iltorb');
 const streamBuffers = require('stream-buffers');
 const request = require('supertest');
+const zlib = require("zlib")
 
 const compression = require('..');
 
@@ -23,7 +23,7 @@ describe('compression()', function () {
   });
 
   it('should skip HEAD', function (done) {
-    const server = createServer({threshold: 0}, function (req, res) {
+    const server = createServer({ threshold: 0 }, function (req, res) {
       res.setHeader('Content-Type', 'text/plain');
       res.end('hello, world');
     });
@@ -36,7 +36,7 @@ describe('compression()', function () {
   });
 
   it('should skip unknown accept-encoding', function (done) {
-    const server = createServer({threshold: 0}, function (req, res) {
+    const server = createServer({ threshold: 0 }, function (req, res) {
       res.setHeader('Content-Type', 'text/plain');
       res.end('hello, world');
     });
@@ -49,7 +49,7 @@ describe('compression()', function () {
   });
 
   it('should skip if content-encoding already set', function (done) {
-    const server = createServer({threshold: 0}, function (req, res) {
+    const server = createServer({ threshold: 0 }, function (req, res) {
       res.setHeader('Content-Type', 'text/plain');
       res.setHeader('Content-Encoding', 'x-custom');
       res.end('hello, world');
@@ -61,7 +61,7 @@ describe('compression()', function () {
   });
 
   it('should set Vary', function (done) {
-    const server = createServer({threshold: 0}, function (req, res) {
+    const server = createServer({ threshold: 0 }, function (req, res) {
       res.setHeader('Content-Type', 'text/plain');
       res.end('hello, world');
     });
@@ -72,7 +72,7 @@ describe('compression()', function () {
   });
 
   it('should set Vary even if Accept-Encoding is not set', function (done) {
-    const server = createServer({threshold: 1000}, function (req, res) {
+    const server = createServer({ threshold: 1000 }, function (req, res) {
       res.setHeader('Content-Type', 'text/plain');
       res.end('hello, world');
     });
@@ -97,7 +97,7 @@ describe('compression()', function () {
   });
 
   it('should set Vary for HEAD request', function (done) {
-    const server = createServer({threshold: 0}, function (req, res) {
+    const server = createServer({ threshold: 0 }, function (req, res) {
       res.setHeader('Content-Type', 'text/plain');
       res.end('hello, world');
     });
@@ -109,7 +109,7 @@ describe('compression()', function () {
   });
 
   it('should transfer chunked', function (done) {
-    const server = createServer({threshold: 0}, function (req, res) {
+    const server = createServer({ threshold: 0 }, function (req, res) {
       res.setHeader('Content-Type', 'text/plain');
       res.end('hello, world');
     });
@@ -119,7 +119,7 @@ describe('compression()', function () {
   });
 
   it('should remove Content-Length for chunked', function (done) {
-    const server = createServer({threshold: 0}, function (req, res) {
+    const server = createServer({ threshold: 0 }, function (req, res) {
       res.setHeader('Content-Type', 'text/plain');
       res.end('hello, world');
     });
@@ -132,7 +132,7 @@ describe('compression()', function () {
   });
 
   it('should work with encoding arguments', function (done) {
-    const server = createServer({threshold: 0}, function (req, res) {
+    const server = createServer({ threshold: 0 }, function (req, res) {
       res.setHeader('Content-Type', 'text/plain');
       res.write('hello, ', 'utf8');
       res.end('world', 'utf8');
@@ -145,7 +145,7 @@ describe('compression()', function () {
 
   it('should allow writing after close', function (done) {
     // UGH
-    const server = createServer({threshold: 0}, function (req, res) {
+    const server = createServer({ threshold: 0 }, function (req, res) {
       res.setHeader('Content-Type', 'text/plain');
       res.once('close', function () {
         res.write('hello, ');
@@ -168,7 +168,7 @@ describe('compression()', function () {
     let drained = false;
     let wait = 2;
 
-    const server = createServer({threshold: 0}, function (req, res) {
+    const server = createServer({ threshold: 0 }, function (req, res) {
       resp = res;
       res.on('drain', function () {
         drained = true;
@@ -282,7 +282,7 @@ describe('compression()', function () {
   it('should transfer large bodies', function (done) {
     const len = bytes('1mb');
     const buf = Buffer.alloc(len);
-    const server = createServer({threshold: 0}, function (req, res) {
+    const server = createServer({ threshold: 0 }, function (req, res) {
       res.setHeader('Content-Type', 'text/plain');
       res.end(buf);
     });
@@ -299,7 +299,7 @@ describe('compression()', function () {
   it('should transfer large bodies with multiple writes', function (done) {
     const len = bytes('40kb');
     const buf = Buffer.alloc(len);
-    const server = createServer({threshold: 0}, function (req, res) {
+    const server = createServer({ threshold: 0 }, function (req, res) {
       res.setHeader('Content-Type', 'text/plain');
       res.write(buf);
       res.write(buf);
@@ -318,7 +318,7 @@ describe('compression()', function () {
 
   describe('threshold', function () {
     it('should not compress responses below the threshold size', function (done) {
-      const server = createServer({threshold: '1kb'}, function (req, res) {
+      const server = createServer({ threshold: '1kb' }, function (req, res) {
         res.setHeader('Content-Type', 'text/plain');
         res.setHeader('Content-Length', '12');
         res.end('hello, world');
@@ -330,7 +330,7 @@ describe('compression()', function () {
     });
 
     it('should compress responses above the threshold size', function (done) {
-      const server = createServer({threshold: '1kb'}, function (req, res) {
+      const server = createServer({ threshold: '1kb' }, function (req, res) {
         res.setHeader('Content-Type', 'text/plain');
         res.setHeader('Content-Length', '2048');
         res.end(Buffer.alloc(2048));
@@ -340,7 +340,7 @@ describe('compression()', function () {
     });
 
     it('should compress when streaming without a content-length', function (done) {
-      const server = createServer({threshold: '1kb'}, function (req, res) {
+      const server = createServer({ threshold: '1kb' }, function (req, res) {
         res.setHeader('Content-Type', 'text/plain');
         res.write('hello, ');
         setTimeout(function () {
@@ -352,7 +352,7 @@ describe('compression()', function () {
     });
 
     it('should not compress when streaming and content-length is lower than threshold', function (done) {
-      const server = createServer({threshold: '1kb'}, function (req, res) {
+      const server = createServer({ threshold: '1kb' }, function (req, res) {
         res.setHeader('Content-Type', 'text/plain');
         res.setHeader('Content-Length', '12');
         res.write('hello, ');
@@ -367,7 +367,7 @@ describe('compression()', function () {
     });
 
     it('should compress when streaming and content-length is larger than threshold', function (done) {
-      const server = createServer({threshold: '1kb'}, function (req, res) {
+      const server = createServer({ threshold: '1kb' }, function (req, res) {
         res.setHeader('Content-Type', 'text/plain');
         res.setHeader('Content-Length', '2048');
         res.write(Buffer.alloc(1024));
@@ -382,7 +382,7 @@ describe('compression()', function () {
     // res.end(str, encoding) broken in node.js 0.8
     const run = /^v0\.8\./.test(process.version) ? it.skip : it;
     run('should handle writing hex data', function (done) {
-      const server = createServer({threshold: 6}, function (req, res) {
+      const server = createServer({ threshold: 6 }, function (req, res) {
         res.setHeader('Content-Type', 'text/plain');
         res.end('2e2e2e2e', 'hex');
       });
@@ -393,7 +393,7 @@ describe('compression()', function () {
     });
 
     it('should consider res.end() as 0 length', function (done) {
-      const server = createServer({threshold: 1}, function (req, res) {
+      const server = createServer({ threshold: 1 }, function (req, res) {
         res.setHeader('Content-Type', 'text/plain');
         res.end();
       });
@@ -404,7 +404,7 @@ describe('compression()', function () {
     });
 
     it('should work with res.end(null)', function (done) {
-      const server = createServer({threshold: 1000}, function (req, res) {
+      const server = createServer({ threshold: 1000 }, function (req, res) {
         res.setHeader('Content-Type', 'text/plain');
         res.end(null);
       });
@@ -417,7 +417,7 @@ describe('compression()', function () {
 
   describe('when "Accept-Encoding: gzip"', function () {
     it('should respond with gzip', function (done) {
-      const server = createServer({threshold: 0}, function (req, res) {
+      const server = createServer({ threshold: 0 }, function (req, res) {
         res.setHeader('Content-Type', 'text/plain');
         res.end('hello, world');
       });
@@ -426,7 +426,7 @@ describe('compression()', function () {
     });
 
     it('should return false writing after end', function (done) {
-      const server = createServer({threshold: 0}, function (req, res) {
+      const server = createServer({ threshold: 0 }, function (req, res) {
         res.setHeader('Content-Type', 'text/plain');
         res.end('hello, world');
         assert.ok(res.write() === false);
@@ -439,7 +439,7 @@ describe('compression()', function () {
 
   describe('when "Accept-Encoding: deflate"', function () {
     it('should respond with deflate', function (done) {
-      const server = createServer({threshold: 0}, function (req, res) {
+      const server = createServer({ threshold: 0 }, function (req, res) {
         res.setHeader('Content-Type', 'text/plain');
         res.end('hello, world');
       });
@@ -450,7 +450,7 @@ describe('compression()', function () {
 
   describe('when "Accept-Encoding: gzip, deflate"', function () {
     it('should respond with gzip', function (done) {
-      const server = createServer({threshold: 0}, function (req, res) {
+      const server = createServer({ threshold: 0 }, function (req, res) {
         res.setHeader('Content-Type', 'text/plain');
         res.end('hello, world');
       });
@@ -464,7 +464,7 @@ describe('compression()', function () {
 
   describe('when "Accept-Encoding: deflate, gzip"', function () {
     it('should respond with gzip', function (done) {
-      const server = createServer({threshold: 0}, function (req, res) {
+      const server = createServer({ threshold: 0 }, function (req, res) {
         res.setHeader('Content-Type', 'text/plain');
         res.end('hello, world');
       });
@@ -478,7 +478,7 @@ describe('compression()', function () {
 
   describe('when "Accept-Encoding: deflate, gzip, br"', function () {
     it('should respond with brotli', function (done) {
-      const server = createServer({threshold: 0}, function (req, res) {
+      const server = createServer({ threshold: 0 }, function (req, res) {
         res.setHeader('Content-Type', 'text/plain');
         res.end('hello, world');
       });
@@ -490,7 +490,7 @@ describe('compression()', function () {
     });
 
     it('should respond with gzip for server-sent events (SSE)', function (done) {
-      const server = createServer({threshold: 0}, function (req, res) {
+      const server = createServer({ threshold: 0 }, function (req, res) {
         res.setHeader('Content-Type', 'text/event-stream');
         res.end('hello, world');
       });
@@ -504,7 +504,7 @@ describe('compression()', function () {
 
   describe('when "Accept-Encoding: br"', function () {
     it('should respond with brotli', function (done) {
-      const server = createServer({threshold: 0}, function (req, res) {
+      const server = createServer({ threshold: 0 }, function (req, res) {
         res.setHeader('Content-Type', 'text/plain');
         res.end('hello, world');
       });
@@ -513,7 +513,7 @@ describe('compression()', function () {
     });
 
     it('should have a correctly encoded brotli response', function (done) {
-      const server = createServer({threshold: 0}, function (req, res) {
+      const server = createServer({ threshold: 0 }, function (req, res) {
         res.setHeader('Content-Type', 'text/plain');
         res.end('hello, world');
       });
@@ -523,13 +523,13 @@ describe('compression()', function () {
       brotliRequest(server)
         .pipe(stream)
         .on('finish', function () {
-          assert.equal('hello, world', iltorb.decompressSync(stream.getContents()).toString('utf-8'));
+          assert.equal('hello, world', zlib.brotliDecompressSync(stream.getContents()).toString('utf-8'));
           done();
         });
     });
 
     it('should apply the brotli parameters from options', function (done) {
-      const server = createServer({threshold: 0, brotli: {quality: 8}}, function (req, res) {
+      const server = createServer({ threshold: 0, brotli: { quality: 8 } }, function (req, res) {
         res.setHeader('Content-Type', 'text/plain');
         res.end('hello, world');
       });
@@ -543,7 +543,7 @@ describe('compression()', function () {
           // brotli directly with the same quality parameter.
           assertBuffersEqual(
             stream.getContents(),
-            iltorb.compressSync(Buffer.from('hello, world', 'utf-8'), {quality: 8})
+            zlib.brotliCompressSync(Buffer.from('hello, world', 'utf-8'), { params: { [zlib.constants.BROTLI_PARAM_QUALITY]: 8 } })
           );
           done();
         });
@@ -553,7 +553,7 @@ describe('compression()', function () {
   describe('when caching is turned on', function () {
     it('should cache a gzipped response with the same ETag', function (done) {
       let count = 0;
-      const server = createServer({threshold: 0}, function (req, res) {
+      const server = createServer({ threshold: 0 }, function (req, res) {
         res.setHeader('Content-Type', 'text/plain');
         res.setHeader('ETag', '12345');
         res.end('hello, world #' + count);
@@ -567,7 +567,7 @@ describe('compression()', function () {
 
     it('should cache a deflate response with the same ETag', function (done) {
       let count = 0;
-      const server = createServer({threshold: 0}, function (req, res) {
+      const server = createServer({ threshold: 0 }, function (req, res) {
         res.setHeader('Content-Type', 'text/plain');
         res.setHeader('ETag', '12345');
         res.end('hello, world #' + count);
@@ -581,23 +581,25 @@ describe('compression()', function () {
 
     it('should cache a brotli response with the same ETag', function (done) {
       let count = 0;
-      const server = createServer({threshold: 0, brotli: {quality: 1}}, function (req, res) {
+      const server = createServer({ threshold: 0, brotli: { quality: 1 } }, function (req, res) {
         res.setHeader('Content-Type', 'text/plain');
         res.setHeader('ETag', '12345');
         res.end('hello, world #' + count);
         count++;
       });
 
+
+
       const stream = new streamBuffers.WritableStreamBuffer();
       brotliRequest(server)
         .pipe(stream)
         .on('finish', function () {
-          assert.equal('hello, world #0', iltorb.decompressSync(stream.getContents()).toString('utf-8'));
+          assert.equal('hello, world #0', zlib.brotliDecompressSync(stream.getContents()).toString('utf-8'));
           const stream2 = new streamBuffers.WritableStreamBuffer();
           brotliRequest(server)
             .pipe(stream2)
             .on('finish', function () {
-              assert.equal('hello, world #0', iltorb.decompressSync(stream2.getContents()).toString('utf-8'));
+              assert.equal('hello, world #0', zlib.brotliDecompressSync(stream2.getContents()).toString('utf-8'));
               done();
             });
         });
@@ -623,7 +625,7 @@ describe('compression()', function () {
 
     it('should not get a cached compressed response for a different ETag', function (done) {
       let count = 0;
-      const server = createServer({threshold: 0}, function (req, res) {
+      const server = createServer({ threshold: 0 }, function (req, res) {
         res.setHeader('Content-Type', 'text/plain');
         res.setHeader('ETag', count.toString());
         res.end('hello, world #' + count);
@@ -637,7 +639,7 @@ describe('compression()', function () {
 
     it('should not cache when there is no ETag', function (done) {
       let count = 0;
-      const server = createServer({threshold: 0}, function (req, res) {
+      const server = createServer({ threshold: 0 }, function (req, res) {
         res.setHeader('Content-Type', 'text/plain');
         res.end('hello, world #' + count);
         count++;
@@ -650,7 +652,7 @@ describe('compression()', function () {
 
     it('should not cache when caching is disabled', function (done) {
       let count = 0;
-      const server = createServer({threshold: 0, cacheSize: false}, function (req, res) {
+      const server = createServer({ threshold: 0, cacheSize: false }, function (req, res) {
         res.setHeader('Content-Type', 'text/plain');
         res.setHeader('ETag', '12345');
         res.end('hello, world #' + count);
@@ -665,7 +667,7 @@ describe('compression()', function () {
     it('should evict from the cache when over the limit', function (done) {
       let etag = 'a';
       let count = 0;
-      const server = createServer({threshold: 0, cacheSize: 40}, function (req, res) {
+      const server = createServer({ threshold: 0, cacheSize: 40 }, function (req, res) {
         res.setHeader('Content-Type', 'text/plain');
         res.setHeader('ETag', etag);
         res.end('hello, world #' + count);
@@ -689,7 +691,7 @@ describe('compression()', function () {
     it('should evict the oldest representation from the cache when over the limit', function (done) {
       let etag = 'a';
       let count = 0;
-      const server = createServer({threshold: 0, cacheSize: 80}, function (req, res) {
+      const server = createServer({ threshold: 0, cacheSize: 80 }, function (req, res) {
         res.setHeader('Content-Type', 'text/plain');
         res.setHeader('ETag', etag);
         res.end('hello, world #' + count);
@@ -717,7 +719,7 @@ describe('compression()', function () {
 
   describe('when "Cache-Control: no-transform" response header', function () {
     it('should not compress response', function (done) {
-      const server = createServer({threshold: 0}, function (req, res) {
+      const server = createServer({ threshold: 0 }, function (req, res) {
         res.setHeader('Cache-Control', 'no-transform');
         res.setHeader('Content-Type', 'text/plain');
         res.end('hello, world');
@@ -730,7 +732,7 @@ describe('compression()', function () {
     });
 
     it('should not set Vary headerh', function (done) {
-      const server = createServer({threshold: 0}, function (req, res) {
+      const server = createServer({ threshold: 0 }, function (req, res) {
         res.setHeader('Cache-Control', 'no-transform');
         res.setHeader('Content-Type', 'text/plain');
         res.end('hello, world');
@@ -799,7 +801,7 @@ describe('compression()', function () {
     it('should flush the response', function (done) {
       let chunks = 0;
       let resp;
-      const server = createServer({threshold: 0}, function (req, res) {
+      const server = createServer({ threshold: 0 }, function (req, res) {
         resp = res;
         res.setHeader('Content-Type', 'text/plain');
         res.setHeader('Content-Length', '2048');
@@ -830,7 +832,7 @@ describe('compression()', function () {
     it('should flush the response for brotli', function (done) {
       var chunks = 0;
       var resp;
-      var server = createServer({threshold: 0}, function (req, res) {
+      var server = createServer({ threshold: 0 }, function (req, res) {
         resp = res;
         res.setHeader('Content-Type', 'text/plain');
         res.setHeader('Content-Length', '2048');
@@ -861,7 +863,7 @@ describe('compression()', function () {
     it('should flush small chunks for gzip', function (done) {
       let chunks = 0;
       let resp;
-      const server = createServer({threshold: 0}, function (req, res) {
+      const server = createServer({ threshold: 0 }, function (req, res) {
         resp = res;
         res.setHeader('Content-Type', 'text/plain');
         write();
@@ -891,7 +893,7 @@ describe('compression()', function () {
     it('should flush small chunks for brotli', function (done) {
       var chunks = 0;
       var resp;
-      var server = createServer({threshold: 0}, function (req, res) {
+      var server = createServer({ threshold: 0 }, function (req, res) {
         resp = res;
         res.setHeader('Content-Type', 'text/plain');
         write();
@@ -921,7 +923,7 @@ describe('compression()', function () {
     it('should flush small chunks for deflate', function (done) {
       let chunks = 0;
       let resp;
-      const server = createServer({threshold: 0}, function (req, res) {
+      const server = createServer({ threshold: 0 }, function (req, res) {
         resp = res;
         res.setHeader('Content-Type', 'text/plain');
         write();
@@ -951,120 +953,8 @@ describe('compression()', function () {
 });
 
 
-const proxyquire = require('proxyquire');
-
-describe('compat factory for', function () {
-  describe('brotli', function () {
-    it('returns iltorb facade on zlib when node supports brotli', function () {
-      // simulate brotli compat no matter what node version for this test
-      const zlibMock = {
-        constants: {
-          BROTLI_PARAM_MODE: 1,
-          BROTLI_PARAM_QUALITY: 2,
-          BROTLI_PARAM_LGWIN: 3,
-          BROTLI_PARAM_LGBLOCK: 4,
-          BROTLI_PARAM_DISABLE_LITERAL_CONTEXT_MODELING: 5,
-          BROTLI_PARAM_LARGE_WINDOW: 6
-        },
-        stream: {},
-        createBrotliCompress(opts) {
-          zlibMock.compressOpts = opts;
-          return zlibMock.stream;
-        },
-        createBrotliDecompress(opts) {
-          zlibMock.decompressOpts = opts;
-          return zlibMock.stream;
-        }
-      };
-
-      const brotliCompat = proxyquire.noCallThru().load('../brotli-compat', {
-        zlib: zlibMock
-      });
-
-      const brotli = brotliCompat();
-      assert.equal(typeof brotli.compressStream, 'function');
-      assert.equal(typeof brotli.decompressStream, 'function');
-
-      assert.notEqual(brotli.compressStream, iltorb.compressStream);
-
-      const compressStream = brotli.compressStream({
-        quality: 5,
-        notARealBrotliOption: 'foo'
-      });
-      assert.strictEqual(compressStream, zlibMock.stream);
-      assert.deepStrictEqual(zlibMock.compressOpts, {
-        params: {
-          [zlibMock.constants.BROTLI_PARAM_QUALITY]: 5
-        }
-      });
-
-      const decompressStream = brotli.decompressStream();
-      assert.strictEqual(decompressStream, zlibMock.stream);
-      assert.equal(zlibMock.decompressOpts, undefined);
-    });
-
-    it('returns iltorb where native brotli is unavailable', function () {
-      const brotliCompat = proxyquire.noCallThru().load('../brotli-compat', {
-        // simulate NO brotli compat no matter what node version for this test
-        zlib: {
-          createBrotliCompress: false,
-          createBrotliDecompress: false
-        }
-      });
-      const brotli = brotliCompat();
-      assert.equal(typeof brotli.compressStream, 'function');
-      assert.equal(typeof brotli.decompressStream, 'function');
-      assert.equal(brotli.compressStream, iltorb.compressStream);
-    });
-
-    it('returns false if no brotli or iltorb are available', function () {
-      const brotliCompat = proxyquire.noCallThru().load('../brotli-compat', {
-        // simulate NO brotli compat no matter what node version for this test
-        zlib: {
-          createBrotliCompress: false,
-          createBrotliDecompress: false
-        },
-        iltorb: null
-      });
-      assert.equal(brotliCompat(), false);
-    })
-  });
-  describe('zopfli', function () {
-    describe('Using zlib', () => {
-      it('returns zlib if it even if zopfli exists', function () {
-        const mockZlib = {};
-        const zopfliCompat = proxyquire.noCallThru().load('../zopfli-compat', {
-          'node-zopfli-es': {},
-          zlib: mockZlib
-        });
-        assert.equal(zopfliCompat(false), mockZlib);
-      });
-    });
-
-    describe('Using zopfli', () => {
-      it('returns zopfli if it exists', function () {
-        const mockZop = {};
-        const zopfliCompat = proxyquire.noCallThru().load('../zopfli-compat', {
-          'node-zopfli-es': mockZop
-        });
-        assert.equal(zopfliCompat(true), mockZop);
-      });
-
-      it('returns false if zopfli does not', function () {
-        const mockZlib = {};
-        const zopfliCompat = proxyquire.noCallThru().load('../zopfli-compat', {
-          'node-zopfli-es': null,
-          zlib: mockZlib
-        });
-        assert.equal(zopfliCompat(true), mockZlib);
-      });
-    })
-  });
-});
-
 function createServer(opts, fn) {
   const _compression = compression(opts);
-
   const server = http.createServer(function (req, res) {
     _compression(req, res, function (err) {
       if (err) {

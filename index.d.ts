@@ -11,7 +11,7 @@ interface Filterable {
    * The default filter function uses the compressible module to determine if
    * res.getHeader('Content-Type') is compressible.
    */
-  filter(req: Request, res: Response): boolean;
+  filter?(req: Request, res: Response): boolean;
 }
 
 interface ShrinkRayOptions extends Filterable {
@@ -46,9 +46,6 @@ interface ShrinkRayOptions extends Filterable {
    * determined, be sure set a Content-Length response header.
    */
   threshold?: number | string | false;
-
-  /** Whether to use node-zopfli-es (true) or zlib (false) for gzip compression. Defaults to true. */
-  useZopfliForGzip?: boolean;
 
   /**
    * There is a sub-object of the options object called zlib which contains all of the parameters related to gzip and
